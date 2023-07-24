@@ -1,22 +1,35 @@
+import { Sequelize } from "sequelize-typescript";
 import Product from "../../../domain/product/entity/product";
+import ProductModel from "../../../infrastructure/product/repository/sequelize/product.model";
+import ProductRepository from "../../../infrastructure/product/repository/sequelize/product.repository";
 import {
   FindProductInput,
   FindProductOutput,
   FindProductUseCase,
 } from "./find-product.usecase";
 
-const repositoryMock = {
-  create: jest.fn(),
-  update: jest.fn(),
-  find: jest.fn(),
-  findAll: jest.fn(),
-};
-
-describe("[Unit] FindProductUseCase", () => {
+describe("[Integration] FindProductUseCase", () => {
   let useCase: FindProductUseCase;
+  let repository: ProductRepository;
+  let sequelize: Sequelize;
 
-  beforeEach(() => {
-    useCase = new FindProductUseCase(repositoryMock);
+  beforeEach(async () => {
+    sequelize = new Sequelize({
+      dialect: "sqlite",
+      storage: ":memory:",
+      logging: false,
+      sync: { force: true },
+    });
+
+    sequelize.addModels([ProductModel]);
+    await sequelize.sync();
+
+    repository = new ProductRepository();
+    useCase = new FindProductUseCase(repository);
+  });
+
+  afterEach(async () => {
+    await sequelize.close();
   });
 
   it("should be defined", () => {
@@ -29,7 +42,7 @@ describe("[Unit] FindProductUseCase", () => {
       const name = "Keyboard RGB Pro";
       const price = 299.7;
       const product = new Product(id, name, price);
-      repositoryMock.find.mockResolvedValueOnce(product);
+      await repository.create(product);
       const input: FindProductInput = { id };
       const output: FindProductOutput = { id, name, price };
       await expect(useCase.execute(input)).resolves.toMatchObject(output);
@@ -37,7 +50,6 @@ describe("[Unit] FindProductUseCase", () => {
 
     it("should throws an exception due to unable to found a product with the given id", async () => {
       const id = "44cd1d96-c8f9-4f5a-a3eb-48808da460b3";
-      repositoryMock.find.mockRejectedValueOnce(new Error("Product not found"));
       const input: FindProductInput = { id };
       await expect(useCase.execute(input)).rejects.toThrow("Product not found");
     });

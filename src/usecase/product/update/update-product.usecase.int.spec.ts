@@ -1,22 +1,34 @@
+import { Sequelize } from "sequelize-typescript";
 import Product from "../../../domain/product/entity/product";
+import ProductModel from "../../../infrastructure/product/repository/sequelize/product.model";
+import ProductRepository from "../../../infrastructure/product/repository/sequelize/product.repository";
 import {
   UpdateProductInput,
   UpdateProductOutput,
   UpdateProductUseCase,
 } from "./update-product.usecase";
 
-const repositoryMock = {
-  create: jest.fn(),
-  update: jest.fn().mockResolvedValue(void 0),
-  find: jest.fn(),
-  findAll: jest.fn(),
-};
-
-describe("[Unit] UpdateProductUseCase", () => {
+describe("[Integration] UpdateProductUseCase", () => {
   let useCase: UpdateProductUseCase;
+  let repository: ProductRepository;
+  let sequelize: Sequelize;
 
-  beforeEach(() => {
-    useCase = new UpdateProductUseCase(repositoryMock);
+  beforeEach(async () => {
+    sequelize = new Sequelize({
+      dialect: "sqlite",
+      storage: ":memory:",
+      logging: false,
+      sync: { force: true },
+    });
+    sequelize.addModels([ProductModel]);
+    await sequelize.sync();
+
+    repository = new ProductRepository();
+    useCase = new UpdateProductUseCase(repository);
+  });
+
+  afterEach(async () => {
+    await sequelize.close();
   });
 
   it("should be defined", () => {
@@ -29,7 +41,7 @@ describe("[Unit] UpdateProductUseCase", () => {
       const name = "Nintendo 64 Game Console";
       const price = 489.77;
       const product = new Product(id, name, price);
-      repositoryMock.find.mockResolvedValueOnce(product);
+      await repository.create(product);
 
       const newName = "SNK Neo Geo CD Game Console";
       const newPrice = 699.99;
@@ -45,7 +57,6 @@ describe("[Unit] UpdateProductUseCase", () => {
 
     it("should throws an exception due to unable to found the product for the given id", async () => {
       const id = "e1bba9b4-f192-4d76-93c3-6331928f5208";
-      repositoryMock.find.mockRejectedValueOnce(new Error("Product not found"));
       const input: UpdateProductInput = {
         id,
         name: "iPhone 14 Pro 256GB",
@@ -59,7 +70,7 @@ describe("[Unit] UpdateProductUseCase", () => {
       const name = "Sega Master System Game Console";
       const price = 199.5;
       const product = new Product(id, name, price);
-      repositoryMock.find.mockResolvedValueOnce(product);
+      await repository.create(product);
       const input: UpdateProductInput = {
         id,
         name: "",
@@ -73,7 +84,7 @@ describe("[Unit] UpdateProductUseCase", () => {
       const name = "NEC PC Engine";
       const price = 299.6;
       const product = new Product(id, name, price);
-      repositoryMock.find.mockResolvedValueOnce(product);
+      await repository.create(product);
       const input: UpdateProductInput = {
         id,
         name: "NEC PC Engine",

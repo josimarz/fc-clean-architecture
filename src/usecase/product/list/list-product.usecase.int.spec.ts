@@ -1,22 +1,34 @@
+import { Sequelize } from "sequelize-typescript";
 import Product from "../../../domain/product/entity/product";
+import ProductModel from "../../../infrastructure/product/repository/sequelize/product.model";
+import ProductRepository from "../../../infrastructure/product/repository/sequelize/product.repository";
 import {
   ListProductInput,
   ListProductOutput,
   ListProductUseCase,
 } from "./list-product.usecase";
 
-const repositoryMock = {
-  create: jest.fn(),
-  update: jest.fn(),
-  find: jest.fn(),
-  findAll: jest.fn(),
-};
-
-describe("[Unit] ListProductUseCase", () => {
+describe("[Integration] ListProductUseCase", () => {
   let useCase: ListProductUseCase;
+  let repository: ProductRepository;
+  let sequelize: Sequelize;
 
-  beforeEach(() => {
-    useCase = new ListProductUseCase(repositoryMock);
+  beforeEach(async () => {
+    sequelize = new Sequelize({
+      dialect: "sqlite",
+      storage: ":memory:",
+      logging: false,
+      sync: { force: true },
+    });
+    sequelize.addModels([ProductModel]);
+    await sequelize.sync();
+
+    repository = new ProductRepository();
+    useCase = new ListProductUseCase(repository);
+  });
+
+  afterEach(async () => {
+    await sequelize.close();
   });
 
   it("should be defined", () => {
@@ -52,7 +64,7 @@ describe("[Unit] ListProductUseCase", () => {
           60.0
         ),
       ];
-      repositoryMock.findAll.mockResolvedValueOnce(items);
+      await Promise.all(items.map((item) => repository.create(item)));
       const input: ListProductInput = {};
       const output: ListProductOutput = {
         products: items.map((item) => ({

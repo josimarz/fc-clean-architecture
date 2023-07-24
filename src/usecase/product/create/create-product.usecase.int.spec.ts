@@ -1,21 +1,33 @@
+import { Sequelize } from "sequelize-typescript";
+import ProductModel from "../../../infrastructure/product/repository/sequelize/product.model";
+import ProductRepository from "../../../infrastructure/product/repository/sequelize/product.repository";
 import {
   CreateProductInput,
   CreateProductOuput,
   CreateProductUseCase,
 } from "./create-product.usecase";
 
-const repositoryMock = {
-  create: jest.fn().mockResolvedValue(void 0),
-  update: jest.fn(),
-  find: jest.fn(),
-  findAll: jest.fn(),
-};
-
-describe("[Unit] CreateProductUseCase", () => {
+describe("[Integration] CreateProductUseCase", () => {
   let useCase: CreateProductUseCase;
+  let repository: ProductRepository;
+  let sequelize: Sequelize;
 
-  beforeEach(() => {
-    useCase = new CreateProductUseCase(repositoryMock);
+  beforeEach(async () => {
+    sequelize = new Sequelize({
+      dialect: "sqlite",
+      storage: ":memory:",
+      logging: false,
+      sync: { force: true },
+    });
+    sequelize.addModels([ProductModel]);
+    await sequelize.sync();
+
+    repository = new ProductRepository();
+    useCase = new CreateProductUseCase(repository);
+  });
+
+  afterEach(async () => {
+    await sequelize.close();
   });
 
   it("should be defined", () => {

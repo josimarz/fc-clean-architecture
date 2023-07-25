@@ -27,7 +27,7 @@ describe("Product", () => {
       const price = 59.86;
       const res = await request(app).post("/product").send({ id, name, price });
       expect(res.status).toBe(400);
-      expect(res.body.message).toBe("Name is required");
+      expect(res.body.message).toBe("product: Name is required");
     });
 
     it("should throws a bad request due to given price is less than zero", async () => {
@@ -36,7 +36,7 @@ describe("Product", () => {
       const price = -39.88;
       const res = await request(app).post("/product").send({ id, name, price });
       expect(res.status).toBe(400);
-      expect(res.body.message).toBe("Price must be greater than zero");
+      expect(res.body.message).toBe("product: Price must be greater than zero");
     });
   });
 
@@ -74,7 +74,7 @@ describe("Product", () => {
         .send({ id, name: newName, price: newPrice });
 
       expect(res.status).toBe(400);
-      expect(res.body.message).toBe("Name is required");
+      expect(res.body.message).toBe("product: Name is required");
     });
 
     it("should throws a bad request to due given price is less than zero", async () => {
@@ -90,7 +90,7 @@ describe("Product", () => {
         .send({ id, name: newName, price: newPrice });
 
       expect(res.status).toBe(400);
-      expect(res.body.message).toBe("Price must be greater than zero");
+      expect(res.body.message).toBe("product: Price must be greater than zero");
     });
 
     it("should throws a not found exception due to unable to find a product with the given id", async () => {
@@ -101,7 +101,7 @@ describe("Product", () => {
         .put(`/product/${id}`)
         .send({ id, name, price });
 
-      expect(res.status).toBe(400);
+      expect(res.status).toBe(404);
       expect(res.body.message).toBe("Product not found");
     });
   });

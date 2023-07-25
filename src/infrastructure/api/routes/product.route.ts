@@ -1,4 +1,5 @@
 import { Request, Response, Router } from "express";
+import NotificationError from "../../../domain/@shared/notification/notification.error";
 import {
   CreateProductInput,
   CreateProductUseCase,
@@ -30,7 +31,7 @@ productRouter.post("/", async (req: Request, res: Response) => {
     const output = await useCase.execute(input);
     res.status(201).send(output);
   } catch (error) {
-    if (error instanceof Error) {
+    if (error instanceof NotificationError) {
       res.status(400).send({ message: error.message });
     }
   }
@@ -47,8 +48,12 @@ productRouter.put("/:id", async (req: Request, res: Response) => {
     const output = await useCase.execute(input);
     res.status(200).send(output);
   } catch (error) {
-    if (error instanceof Error) {
+    if (error instanceof NotificationError) {
       res.status(400).send({ message: error.message });
+      return;
+    }
+    if (error instanceof Error) {
+      res.status(404).send({ message: error.message });
     }
   }
 });
